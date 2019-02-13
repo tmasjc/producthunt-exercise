@@ -16,7 +16,7 @@
 
 #### PostsForAnalysis.csv
 
-列 1 - 12 为帖子的相关属性变量：
+列 1 - 14 为帖子的相关属性变量：
 
 	id - Post ID 
 	
@@ -41,18 +41,11 @@
 	num_makers - 产品开发者数量（0表示开发者非 Product Hunt 用户，或者未标记产品）
 	
 	num_topics - 帖子被标记的主题数量
-
-列 13 - 313 为帖子在相应时间范围内可以标注的所有可能的主题：
-
-	TRUE 表示帖子被标记了该主题
 	
-	No data 帖子没有被标记在该主题中
-
-列 314 - 315：
-
 	user_id - 发布帖子的用户ID
 	
 	votes_count - 该帖子的总投票数
+
 
 
 #### UsersForAnalysis.csv
@@ -84,3 +77,8 @@
 	posts_count - 帖子/产品发布数量
 	
 	votes_count - 提交的投票数量
+	
+	
+#### PostsTopicsForAnalysis.csv
+
+各个帖子对应的主题. `TRUE` 表示帖子被标记了该主题, 空值代表帖子没有被标记在该主题中.
