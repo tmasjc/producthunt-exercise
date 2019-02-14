@@ -24,30 +24,22 @@ PH 上涵盖了各式各样的主题，从网页至效率小贴士。各个主�
 贴子的投票数量 (`votes_count`) 是衡量帖子受认可程度的重要指标。基于你对网上用户游览作息的了解，
 你假设不同的发布时间会对帖子受欢迎程度有直接的影响。你发现在早上以及晚上发布的帖子明显积累更多的票数。
 
-提示:
-如何从时间类别(`dttm`)解析年份
+提示: 如何从时间类别(`dttm`)解析年份
+`?lubridate::year()`
 
-``` r
-?lubridate::year()
-```
-
-![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 #### 3 搜索科技产品触觉达人
 
 运营部门希望招纳一名科技牛人成为体验专家，提供产品或者运营的建议。以投票数衡量，他们希望知道哪些人发布的帖子最收到平台用户的认可。你删选发布超过30个帖子的用户，按照帖子投票数的均值（累计的总投票数除于发布的帖子数）选出了20个人选。
 
-![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 #### 4 哪一些主题收到用户青睐
 
 你想初步了解 PH 的用户画像。具体地说，在受到欢迎的帖子中，哪些主题频繁出现？你删选在投票数中位数以上的帖子，汇总各个主题出现的次数。你删除了
 `tech` 主题，因为它没有太大的代表性。最后你总结出了10大主题。
 
-提示：如何转换宽表至长表
+提示：如何转换宽表至长表 `?tidyr::gather()`
 
-``` r
-?tidyr::gather()
-```
-
-![](README_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
