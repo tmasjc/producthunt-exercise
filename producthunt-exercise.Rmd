@@ -1,0 +1,176 @@
+---
+title: "Analysis explore"
+output: html_document
+---
+
+
+```{r setup, echo=FALSE, include=FALSE, message=FALSE, warning=FALSE}
+#global option
+knitr::opts_chunk$set(
+    echo=TRUE, 
+    include=TRUE, 
+    message=FALSE,
+    warning=FALSE,
+    fig.showtext=TRUE,
+    fig.width=9
+    )
+library(tidyverse)
+
+old <- theme_light() + theme(text = element_text(family = "Noto Sans CJK SC", size = 14))
+theme_set(old)
+
+```
+
+****
+
+#### 加载数据
+
+```{r}
+# load data
+
+dat <- lapply(list.files("Data/", pattern = "*.csv"), 
+              function(x) read.csv(paste0("Data/", x), stringsAsFactors = FALSE))
+
+names(dat) <- list.files("Data/", pattern = "*.csv") %>% 
+  gsub(pattern = ".csv$", replacement = "") %>% 
+  tolower()
+
+```
+
+```{r, eval=FALSE}
+lapply(dat, skimr::skim)
+```
+
+****
+
+#### 1 针对主题的探索
+
+```{r}
+dat$alltopics %>% 
+  arrange(-num_posts) %>% 
+  top_n(20) %>% 
+  ggplot(aes(x = reorder(name, -num_posts), y = num_posts)) +
+  geom_col(width = 0.1, fill = "#C9EFF9") +
+  geom_point(aes(size = num_followers), color = "darkblue") +
+  theme(axis.text.x = element_text(angle = 60)) +
+  labs(x = "Topics", y = "Posts", title = "Topics' Posts and Followers")
+
+```
+
+****
+
+```{r}
+dat$alltopics %>% 
+  mutate(num_posts_label = cut(num_posts, 
+                               breaks = c(0, 1000, 5000, 1000000000),
+                               labels = c("1000 - ", "1000 -5000", "5000 + "))) %>% 
+  # filter(name != "tech") %>% 
+  ggplot(aes(x = num_posts, y = num_followers)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_wrap(~ num_posts_label, scales = "free_x")
+  
+```
+
+****
+
+correlation test
+
+```{r}
+pander::pandoc.table(cor.test(dat$alltopics$num_followers, dat$alltopics$num_posts))
+```
+
+****
+
+#### 2 针对帖子发布时间的探索
+
+```{r}
+dat$postsforanalysis %>% 
+  mutate(year = lubridate::year(created_at)) %>% 
+  group_by(year, time_of_day) %>% 
+  summarise(votes = sum(votes_count, na.rm = TRUE)) %>% 
+  ggplot(aes(x = year, y = votes, fill = time_of_day)) +
+  geom_bar(stat = "identity", position = "dodge")
+```
+
+****
+
+```{r}
+library(plotly)
+
+dat$postsforanalysis %>% 
+  mutate(year = lubridate::year(created_at)) %>% 
+  group_by(year, time_of_day) %>% 
+  summarise(votes = sum(votes_count, na.rm = TRUE),
+            posts = n_distinct(id, na.rm = TRUE)) %>% 
+  plot_ly() %>% 
+  add_trace(x = ~year, y = ~votes, type = "bar", name = "votes",
+            color = ~time_of_day,
+            hoverinfo = "text",
+            text = ~paste0("in time of the day : ", time_of_day,
+                           "<br> all votes cumulated : ", votes)) %>% 
+  add_trace(x = ~year, y = ~posts, type = "scatter",
+            mode = "markers", name = "posts", yaxis = "y2",
+            color = ~time_of_day, 
+            marker = list(size = ~posts / 100),
+            hoverinfo = "text",
+            text = ~paste0("in time of the day : ", time_of_day,
+                           "<br> the num of post : ", posts)) %>%
+  layout(title = "",
+         barmode = "dodge",
+         xaxis = list(title = ""),
+         yaxis2 = list(side = "right", overlaying = "y",
+                       title = "posts",
+                       showgird = FALSE, zeroline = FALSE),
+         yaxis = list(side = "left", title = "votes", 
+                      showgird = FALSE, zeroline = FALSE))
+```
+
+****
+
+#### 3 搜索科技产品触觉达人
+
+```{r}
+dat$postsforanalysis %>% select(id, user_id, votes_count) %>% 
+  left_join(dat$usersforanalysis %>% select(name, user_id, posts_count),
+            by = "user_id") %>% 
+  group_by(user_id, name) %>% 
+  summarise(posts_all = n_distinct(id),
+            votes_all = sum(votes_count, na.rm = TRUE)) %>% 
+  filter(posts_all > 30) %>% 
+  mutate(mean_votes =  votes_all / posts_all) %>% 
+  arrange(-mean_votes) %>% 
+  head(20) %>% 
+  ggplot(aes(x = mean_votes, y = reorder(name, mean_votes))) +
+  geom_segment(aes(yend = name), xend = 0, colour = "grey") +
+  geom_point(size = 3, aes(color = mean_votes)) +
+  labs(x = "average votes count per post", y = "Name", title = "Top 20 Poster")
+```
+
+****
+
+#### 4 哪些主题更受用户青睐
+
+```{r}
+dat$postsforanalysis %>% 
+  select(id, votes_count) %>% 
+  filter(votes_count >= median(votes_count, na.rm = TRUE)) %>% 
+  left_join(dat$poststopicsforanalysis %>% 
+              select(-tech),
+            by = "id") %>% 
+  gather(key = "topics", value = "tagged", -id, -votes_count) %>% 
+  filter(tagged == "true") %>% 
+  group_by(topics) %>% 
+  summarise(n = n()) %>% 
+  arrange(-n) %>% 
+  head(10) %>% 
+  ggplot(aes(x = reorder(topics, n), y = n, fill = topics)) +
+  geom_bar(stat = "identity") +
+  coord_polar(theta = "y") +
+  ylim(0, 3500) +
+  theme(axis.text.y= element_blank()) +
+  labs(x = "count", y = "topics", title = "Top 10 topics")
+
+```
+
+****
